@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="http://mazhuang.org/feed.xml" rel="self" type="application/atom+xml" /><link href="http://mazhuang.org/" rel="alternate" type="text/html" /><updated>2016-09-12T13:20:32+00:00</updated><id>http://mazhuang.org/</id><title>qijunwei</title><subtitle>“可爱兔兔的个人博客&quot;</subtitle><author><name>qijunwei</name></author><entry><title>UITableView中当点选时改变了Cell内部元素的背景颜色 但是点选结束又恢复成原来的颜色的原因和解决方法</title><link href="http://mazhuang.org/2016/08/25/swift/" rel="alternate" type="text/html" title="UITableView中当点选时改变了Cell内部元素的背景颜色 但是点选结束又恢复成原来的颜色的原因和解决方法" /><published>2016-08-25T00:00:00+00:00</published><updated>2016-08-25T00:00:00+00:00</updated><id>http://mazhuang.org/2016/08/25/swift</id><content type="html" xml:base="http://mazhuang.org/2016/08/25/swift/">&lt;p&gt;应用场景：
+现在有一个TableView，其属性clearsSelectionOnViewWillAppear = true &lt;br /&gt;
+点击里面的Cell可以进入一个新的UIViewController，从新的UIViewController点击返回时触发协议方法并改变Cell的某元素的背景颜色&lt;br /&gt;
+但是这样做之后发现颜色并没有改变，和进入下一级页面前是一样的
+这是因为协议方法的调用早于Cell的这个方法的调用，系统会在ViewWillAppear中调用setSelected把选中状态取消并将颜色恢复成点选前的状态&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;setSelected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;selected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+     &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;setSelected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;selected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+     &lt;span class=&quot;c1&quot;&gt;// Configure the view for the selected state&lt;/span&gt;
+ &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;解决方法：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;通过dispatch_async或dispatch_after延后设置背景颜色&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;提前结束Cell的选中状态，通过如下代码&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;tableView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;tableView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UITableView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;didSelectRowAtIndexPath&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;indexPath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;NSIndexPath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// 让tableview的选中状态快速消失 而不会影响之后的颜色设置&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tableView&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;deselectRowAtIndexPath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;indexPath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;</content><author><name>qijunwei</name></author><category term="swift" /><category term="swift" /><category term="iOS" /><summary>应用场景：
+现在有一个TableView，其属性clearsSelectionOnViewWillAppear = true 
+点击里面的Cell可以进入一个新的UIViewController，从新的UIViewController点击返回时触发协议方法并改变Cell的某元素的背景颜色
+但是这样做之后发现颜色并没有改变，和进入下一级页面前是一样的
+这是因为协议方法的调用早于Cell的这个方法的调用，系统会在ViewWillAppear中调用setSelected把选中状态取消并将颜色恢复成点选前的状态</summary></entry></feed>
